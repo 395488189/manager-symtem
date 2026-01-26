@@ -19,6 +19,11 @@ const routes = [ // 路由定义
         path: 'user',
         name: 'User',
         component: () => import('../views/User.vue')
+      },
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('../views/Dashboard.vue')
       }
     ]
   },
