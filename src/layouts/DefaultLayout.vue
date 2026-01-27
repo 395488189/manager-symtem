@@ -1,18 +1,24 @@
 <template>
   <div class="layout">
     <aside class="sidebar">
-      <div class="row">
-        <div class="row_box">
-          <div @click="toExpand">
+      <!-- 一级菜单 -->
+      <div v-for="item in menuList" :key="index" class="row">
+        <div @click="toExpand(index)" class="row_box">
+          <div>
             <img class="row_icon" src="../image/sidebar_icon/icon_chart.png" alt="">
           </div>
-          <div class="row_title">仪表盘</div>
+          <div class="row_title">{{item.title}}</div>
           <div class="row_arrow"></div>
         </div>
-
-        <div class="row_content">数据可视化</div>
+        <!-- 二级菜单 -->
+        <div v-for="child in item" :key="child.path" class="row">
+          <div @click="toJump(index)" class="row_box">
+            <div class="row_title">{{item.title}}</div>
+          </div>
+        </div>
       </div>
 
+<!-- 
       <div class="row">
         <div class="row_box">
           <div >
@@ -23,7 +29,7 @@
         </div>
 
         <div class="row_content">患者列表</div>
-      </div>
+      </div> -->
 
     </aside>
 
@@ -38,11 +44,38 @@
     </div>
   </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 const router = useRouter()
-const expanded = ref(true)
+interface MenuItem {
+  title: string
+  icon?: string
+  path?: string
+  children?: MenuItem[]
+}
+const openIndex = ref<number | null>(null)
+const menuList: MenuItem[] = [
+  {
+    title: '仪表盘',
+    icon: '📊',
+    children: [
+      { title: '数据可视化', path: '/' }
+    ]
+  },
+  {
+    title: '患者管理',
+    icon: '👤',
+    children: [
+      { title: '患者列表', path: '/patients' },
+      { title: '就诊记录', path: '/records' }
+    ]
+  }
+]
+
+function toExpand(index: number) {
+  openIndex.value = openIndex.value === index ? null : index
+}
 </script>
 <style scoped>
 .layout {
