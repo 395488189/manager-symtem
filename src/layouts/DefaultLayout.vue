@@ -2,7 +2,7 @@
   <div class="layout">
     <aside class="sidebar">
       <!-- 一级菜单 -->
-      <div v-for="item in menuList" :key="index" class="row">
+      <div v-for="(item, index) in menuList" :key="index" class="row">
         <div @click="toExpand(index)" class="row_box">
           <div>
             <img class="row_icon" src="../image/sidebar_icon/icon_chart.png" alt="">
@@ -11,11 +11,14 @@
           <div class="row_arrow"></div>
         </div>
         <!-- 二级菜单 -->
-        <div v-for="child in item" :key="child.path" class="row">
-          <div @click="toJump(index)" class="row_box">
-            <div class="row_title">{{item.title}}</div>
+        <div v-show="openIndex === index">
+          <div v-for="child in item.children" :key="child.path" class="row">
+            <div @click="toJump(child.path)" class="row_box">
+              <div class="row_title">{{child.title}}</div>
+            </div>
           </div>
         </div>
+
       </div>
 
 <!-- 
@@ -60,7 +63,7 @@ const menuList: MenuItem[] = [
     title: '仪表盘',
     icon: '📊',
     children: [
-      { title: '数据可视化', path: '/' }
+      { title: '数据可视化', path: '/dashboard' }
     ]
   },
   {
@@ -75,6 +78,9 @@ const menuList: MenuItem[] = [
 
 function toExpand(index: number) {
   openIndex.value = openIndex.value === index ? null : index
+}
+const toJump = (path: string | undefined) => {
+  router.push(path || '/')
 }
 </script>
 <style scoped>
