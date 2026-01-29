@@ -23,7 +23,8 @@ const routes = [ // 路由定义
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import('../views/Dashboard.vue')
+        component: () => import('../views/Dashboard.vue'),
+        meta: { title: '数据可视化' }
       }
     ]
   },

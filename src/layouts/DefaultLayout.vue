@@ -14,7 +14,7 @@
         <div v-show="openIndex === index">
           <div v-for="child in item.children" :key="child.path" class="row">
             <div @click="toJump(child.path)" class="row_box">
-              <div class="row_title">{{child.title}}</div>
+              <div class="child_title">{{child.title}}</div>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@ const openIndex = ref<number | null>(null)
 const menuList: MenuItem[] = [
   {
     title: '仪表盘',
-    icon: '📊',
+    icon: '',
     children: [
       { title: '数据可视化', path: '/dashboard' }
     ]
@@ -70,7 +70,7 @@ const menuList: MenuItem[] = [
     title: '患者管理',
     icon: '👤',
     children: [
-      { title: '患者列表', path: '/patients' },
+      { title: '患者列表', path: '/patients'},
       { title: '就诊记录', path: '/records' }
     ]
   }
@@ -140,5 +140,11 @@ const toJump = (path: string | undefined) => {
   border-left: 2px solid #515151; 
   border-bottom: 2px solid #515151;
   transform: rotate(-45deg);
+}
+.child_title {
+  color: #515151;
+  flex: 1;
+  padding-left: 36px;
+  font-size: 16px;
 }
 </style>
