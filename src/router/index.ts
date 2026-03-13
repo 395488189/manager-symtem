@@ -25,6 +25,12 @@ const routes = [ // 路由定义
         name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
         meta: { title: '数据可视化' }
+      },
+      {
+        path: 'doctor',
+        name: 'Doctor',
+        component: () => import('../views/Doctor.vue'),
+        meta: { title: '医生管理' }
       }
     ]
   },

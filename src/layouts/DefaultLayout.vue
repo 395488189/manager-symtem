@@ -3,12 +3,12 @@
     <aside class="sidebar">
       <!-- 一级菜单 -->
       <div v-for="(item, index) in menuList" :key="index" class="row">
-        <div @click="toExpand(index)" class="row_box">
+        <div @click="toExpand(item, index)" class="row_box">
           <div>
             <img class="row_icon" src="../image/sidebar_icon/icon_chart.png" alt="">
           </div>
           <div class="row_title">{{item.title}}</div>
-          <div class="row_arrow"></div>
+          <div v-show="!item.path" class="row_arrow"></div>
         </div>
         <!-- 二级菜单 -->
         <div v-show="openIndex === index">
@@ -73,11 +73,20 @@ const menuList: MenuItem[] = [
       { title: '患者列表', path: '/patients'},
       { title: '就诊记录', path: '/records' }
     ]
+  },
+  {
+    title: '医生管理',
+    icon: '👤',
+    path: '/doctor'
   }
 ]
 
-function toExpand(index: number) {
-  openIndex.value = openIndex.value === index ? null : index
+function toExpand(item: MenuItem, index: number) {
+  if (item.path) {
+    router.push(item.path);
+  } else {
+    openIndex.value = openIndex.value === index ? null : index;
+  }
 }
 const toJump = (path: string | undefined) => {
   router.push(path || '/')
