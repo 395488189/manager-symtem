@@ -2,17 +2,17 @@
   <div class="doctor-page">
     <!-- Header 区 -->
     <div class="page-header">
-      <h2>Doctor Management</h2>
+      <h2>医生管理</h2>
       <div class="header-actions">
         <el-input
           v-model="searchText"
           size="medium"
-          placeholder="Search doctor by name or department"
+          placeholder="搜索医生"
           clearable
           class="search-input"
         />
         <el-button type="primary" icon="el-icon-plus" @click="onAddDoctor">
-          Add Doctor
+          添加医生
         </el-button>
       </div>
     </div>
@@ -104,7 +104,8 @@ const filteredDoctors = computed(() => {
     return (
       doc.name.toLowerCase().includes(q) ||
       doc.department.toLowerCase().includes(q) ||
-      doc.team.toLowerCase().includes(q)
+      doc.team.toLowerCase().includes(q) ||
+      doc.status.toLowerCase().includes(q)
     );
   });
 });
