@@ -72,8 +72,11 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus'; // 消息
-import DoctorCard from '../components/DoctorCard.vue';
-import type { Doctor } from '../components/DoctorCard.vue';
+import { useRouter } from 'vue-router';
+import DoctorCard from '../../components/DoctorCard.vue';
+import type { Doctor } from '../../components/DoctorCard.vue';
+
+const router = useRouter();
 
 const searchText = ref<string>('');
 const currentPage = ref<number>(1);
@@ -81,18 +84,18 @@ const pageSize = ref<number>(8);
 
 // mock 数据，用于展示
 const allDoctors = reactive<Doctor[]>([
-  { id: 1, name: '陈晓燕', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '心内科', team: '心血管内科一病区', status: '值班', score: 4.8 },
-  { id: 2, name: '李博文', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '神经内科', team: '神经内科病区', status: '休息', score: 4.4 },
-  { id: 3, name: '王可欣', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '儿科', team: '儿科病区', status: '值班', score: 4.9 },
-  { id: 4, name: '刘建明', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '骨科', team: '骨科病区', status: '值班', score: 4.5 },
-  { id: 5, name: '张雅琴', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '皮肤科', team: '皮肤科门诊', status: '休息', score: 4.3 },
-  { id: 6, name: '郭伟', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '消化内科', team: '消化内科病区', status: '值班', score: 4.7 },
-  { id: 7, name: '孙晓丽', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '内分泌科', team: '内分泌科病区', status: '值班', score: 4.6 },
-  { id: 8, name: '谭志强', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '眼科', team: '眼科病区', status: '休息', score: 4.4 },
-  { id: 9, name: '吴雅文', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '精神科', team: '精神卫生中心', status: '值班', score: 4.8 },
-  { id: 10, name: '马超', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '放射科', team: '影像中心', status: '值班', score: 4.6 },
-  { id: 11, name: '周婷婷', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '耳鼻喉科', team: '耳鼻喉科病区', status: '休息', score: 4.5 },
-  { id: 12, name: '黄磊', avatar: 'https://ui-avatars.com/api/?name=%E5%8C%BB%E7%94%9F&size=150&background=random&color=fff', department: '肾内科', team: '肾内科病区', status: '值班', score: 4.7 },
+  { id: 1, name: '陈晓燕', avatar: '/doctor/doctor.png', department: '心内科', team: '心血管内科一病区', status: '值班', score: 4.8 },
+  { id: 2, name: '李博文', avatar: '/doctor/doctor.png', department: '神经内科', team: '神经内科病区', status: '休息', score: 4.4 },
+  { id: 3, name: '王可欣', avatar: '/doctor/doctor.png', department: '儿科', team: '儿科病区', status: '值班', score: 4.9 },
+  { id: 4, name: '刘建明', avatar: '/doctor/doctor.png', department: '骨科', team: '骨科病区', status: '值班', score: 4.5 },
+  { id: 5, name: '张雅琴', avatar: '/doctor/doctor.png', department: '皮肤科', team: '皮肤科门诊', status: '休息', score: 4.3 },
+  { id: 6, name: '郭伟', avatar: '/doctor/doctor.png', department: '消化内科', team: '消化内科病区', status: '值班', score: 4.7 },
+  { id: 7, name: '孙晓丽', avatar: '/doctor/doctor.png', department: '内分泌科', team: '内分泌科病区', status: '值班', score: 4.6 },
+  { id: 8, name: '谭志强', avatar: '/doctor/doctor.png', department: '眼科', team: '眼科病区', status: '休息', score: 4.4 },
+  { id: 9, name: '吴雅文', avatar: '/doctor/doctor.png', department: '精神科', team: '精神卫生中心', status: '值班', score: 4.8 },
+  { id: 10, name: '马超', avatar: '/doctor/doctor.png', department: '放射科', team: '影像中心', status: '值班', score: 4.6 },
+  { id: 11, name: '周婷婷', avatar: '/doctor/doctor.png', department: '耳鼻喉科', team: '耳鼻喉科病区', status: '休息', score: 4.5 },
+  { id: 12, name: '黄磊', avatar: '/doctor/doctor.png', department: '肾内科', team: '肾内科病区', status: '值班', score: 4.7 },
 ]);
 
 // 搜索过滤
@@ -139,11 +142,11 @@ const handlePageChange = (newPage: number) => {
 };
 
 const openProfile = (doctor: Doctor) => {
-  ElMessage.info(`Open profile of ${doctor.name}`);
+  router.push(`/doctor/${doctor.id}`);
 };
 
 const openSchedule = (doctor: Doctor) => {
-  ElMessage.info(`Open schedule of ${doctor.name}`);
+  router.push(`/doctor/${doctor.id}/schedule`);
 };
 </script>
 

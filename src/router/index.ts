@@ -29,9 +29,21 @@ const routes = [ // 路由定义
       {
         path: 'doctor',
         name: 'Doctor',
-        component: () => import('../views/Doctor.vue'),
+        component: () => import('../views/Doctor/DoctorManager.vue'),
         meta: { title: '医生管理' }
-      }
+      },
+      {
+        path: 'doctor/:id',
+        name: 'DoctorDetail',
+        component: () => import('../views/Doctor/DoctorDetail.vue'),
+        meta: { title: '医生详情' }
+      },
+      {
+        path: 'doctor/:id/schedule',
+        name: 'DoctorSchedule',
+        component: () => import('../views/Doctor/DoctorSchedule.vue'),
+        meta: { title: '医生排班' }
+      },
     ]
   },
   {
