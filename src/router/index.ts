@@ -16,9 +16,10 @@ const routes = [ // 路由定义
         component: () => import('../views/Home.vue')
       },
       {
-        path: 'user',
-        name: 'User',
-        component: () => import('../views/User.vue')
+        path: 'patients',
+        name: 'Patients',
+        component: () => import('../views/Patient/PatientManager.vue'),
+        meta: { title: '患者管理' }
       },
       {
         path: 'dashboard',
