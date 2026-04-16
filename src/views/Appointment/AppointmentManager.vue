@@ -1,0 +1,336 @@
+<template>
+  <div class="appointment-page">
+    <!-- 搜索栏 -->
+    <el-card shadow="never" class="search-card">
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="患者姓名">
+          <el-input v-model="searchForm.patientName" placeholder="请输入患者姓名" clearable />
+        </el-form-item>
+        <el-form-item label="科室">
+          <el-select v-model="searchForm.department" placeholder="全部" clearable style="width: 140px">
+            <el-option v-for="dept in departments" :key="dept" :label="dept" :value="dept" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="医生">
+          <el-input v-model="searchForm.doctorName" placeholder="请输入医生姓名" clearable />
+        </el-form-item>
+        <el-form-item label="预约日期">
+          <el-date-picker
+            v-model="searchForm.date"
+            type="date"
+            placeholder="选择日期"
+            style="width: 140px"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
+            <el-option label="待支付" value="待支付" />
+            <el-option label="已支付" value="已支付" />
+            <el-option label="已完成" value="已完成" />
+            <el-option label="已取消" value="已取消" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 统计卡片 -->
+    <el-row :gutter="16" class="stats-row">
+      <el-col :span="6">
+        <div class="stat-card stat-pending">
+          <div class="stat-value">{{ stats.pending }}</div>
+          <div class="stat-label">待支付</div>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="stat-card stat-paid">
+          <div class="stat-value">{{ stats.paid }}</div>
+          <div class="stat-label">已支付</div>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="stat-card stat-completed">
+          <div class="stat-value">{{ stats.completed }}</div>
+          <div class="stat-label">已完成</div>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="stat-card stat-cancelled">
+          <div class="stat-value">{{ stats.cancelled }}</div>
+          <div class="stat-label">已取消</div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 操作栏 -->
+    <div class="toolbar">
+      <el-button type="primary" @click="handleAdd">
+        <el-icon><Plus /></el-icon> 新增预约
+      </el-button>
+    </div>
+
+    <!-- 数据表格 -->
+    <el-card shadow="never" class="table-card">
+      <el-table :data="paginatedData" stripe border style="width: 100%">
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="id" label="预约号" width="100" />
+        <el-table-column prop="patientName" label="患者姓名" width="100" />
+        <el-table-column prop="patientPhone" label="联系电话" width="130" />
+        <el-table-column prop="department" label="科室" width="120" />
+        <el-table-column prop="doctorName" label="医生" width="100" />
+        <el-table-column prop="appointmentDate" label="预约日期" width="120" />
+        <el-table-column prop="appointmentTime" label="预约时间" width="100" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="amount" label="金额" width="100">
+          <template #default="{ row }">¥{{ row.amount }}</template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="160" />
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="handleView(row)">查看</el-button>
+            <el-button link type="success" v-if="row.status === '待支付'" @click="handlePay(row)">支付</el-button>
+            <el-button link type="warning" v-if="row.status === '已支付'" @click="handleComplete(row)">完成</el-button>
+            <el-button link type="danger" v-if="['待支付', '已支付'].includes(row.status)" @click="handleCancel(row)">取消</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-wrapper">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :page-sizes="[10, 20, 50]"
+          :page-size="pagination.pageSize"
+          :current-page="pagination.currentPage"
+          :total="filteredData.length"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </el-card>
+
+    <!-- 新增预约弹窗 -->
+    <el-dialog v-model="dialogVisible" title="新增预约" width="500px">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+        <el-form-item label="患者姓名" prop="patientName">
+          <el-input v-model="formData.patientName" placeholder="请输入患者姓名" />
+        </el-form-item>
+        <el-form-item label="联系电话" prop="patientPhone">
+          <el-input v-model="formData.patientPhone" placeholder="请输入联系电话" />
+        </el-form-item>
+        <el-form-item label="科室" prop="department">
+          <el-select v-model="formData.department" placeholder="请选择科室" style="width: 100%">
+            <el-option v-for="dept in departments" :key="dept" :label="dept" :value="dept" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="医生" prop="doctorName">
+          <el-select v-model="formData.doctorName" placeholder="请选择医生" style="width: 100%">
+            <el-option v-for="doc in doctors" :key="doc" :label="doc" :value="doc" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="预约日期" prop="appointmentDate">
+          <el-date-picker v-model="formData.appointmentDate" type="date" placeholder="选择日期" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="预约时间" prop="appointmentTime">
+          <el-select v-model="formData.appointmentTime" placeholder="请选择时间" style="width: 100%">
+            <el-option v-for="time in timeSlots" :key="time" :label="time" :value="time" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit">确定预约</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 详情弹窗 -->
+    <el-dialog v-model="detailVisible" title="预约详情" width="600px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="预约号">{{ currentRow?.id }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="getStatusType(currentRow?.status || '')">{{ currentRow?.status }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="患者姓名">{{ currentRow?.patientName }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ currentRow?.patientPhone }}</el-descriptions-item>
+        <el-descriptions-item label="科室">{{ currentRow?.department }}</el-descriptions-item>
+        <el-descriptions-item label="医生">{{ currentRow?.doctorName }}</el-descriptions-item>
+        <el-descriptions-item label="预约日期">{{ currentRow?.appointmentDate }}</el-descriptions-item>
+        <el-descriptions-item label="预约时间">{{ currentRow?.appointmentTime }}</el-descriptions-item>
+        <el-descriptions-item label="金额">¥{{ currentRow?.amount }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ currentRow?.createTime }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules } from 'element-plus'
+
+interface Appointment {
+  id: number
+  patientName: string
+  patientPhone: string
+  department: string
+  doctorName: string
+  appointmentDate: string
+  appointmentTime: string
+  status: string
+  amount: number
+  createTime: string
+}
+
+const departments = ['心内科', '神经内科', '儿科', '骨科', '消化内科', '内分泌科', '皮肤科', '眼科']
+const doctors = ['陈晓燕', '李博文', '王可欣', '刘建明', '张雅琴', '郭伟', '孙晓丽', '谭志强']
+const timeSlots = ['08:00-09:00', '09:00-10:00', '10:00-11:00', '14:00-15:00', '15:00-16:00', '16:00-17:00']
+
+const searchForm = reactive({
+  patientName: '',
+  department: '',
+  doctorName: '',
+  date: '',
+  status: ''
+})
+
+const pagination = reactive({ currentPage: 1, pageSize: 10 })
+const dialogVisible = ref(false)
+const detailVisible = ref(false)
+const formRef = ref<FormInstance>()
+const currentRow = ref<Appointment | null>(null)
+
+const formData = reactive({
+  patientName: '',
+  patientPhone: '',
+  department: '',
+  doctorName: '',
+  appointmentDate: '',
+  appointmentTime: ''
+})
+
+const formRules: FormRules = {
+  patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
+  patientPhone: [
+    { required: true, message: '请输入联系电话', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  department: [{ required: true, message: '请选择科室', trigger: 'change' }],
+  doctorName: [{ required: true, message: '请选择医生', trigger: 'change' }],
+  appointmentDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
+  appointmentTime: [{ required: true, message: '请选择时间', trigger: 'change' }]
+}
+
+const allData = reactive<Appointment[]>([
+  { id: 1001, patientName: '张三', patientPhone: '13800138001', department: '心内科', doctorName: '陈晓燕', appointmentDate: '2024-04-20', appointmentTime: '08:00-09:00', status: '待支付', amount: 50, createTime: '2024-04-15 10:30:00' },
+  { id: 1002, patientName: '李四', patientPhone: '13900139002', department: '神经内科', doctorName: '李博文', appointmentDate: '2024-04-20', appointmentTime: '09:00-10:00', status: '已支付', amount: 50, createTime: '2024-04-15 11:20:00' },
+  { id: 1003, patientName: '王五', patientPhone: '13700137003', department: '儿科', doctorName: '王可欣', appointmentDate: '2024-04-21', appointmentTime: '14:00-15:00', status: '已完成', amount: 30, createTime: '2024-04-16 09:15:00' },
+  { id: 1004, patientName: '赵六', patientPhone: '13600136004', department: '骨科', doctorName: '刘建明', appointmentDate: '2024-04-21', appointmentTime: '10:00-11:00', status: '已支付', amount: 50, createTime: '2024-04-16 14:00:00' },
+  { id: 1005, patientName: '钱七', patientPhone: '13500135005', department: '皮肤科', doctorName: '张雅琴', appointmentDate: '2024-04-22', appointmentTime: '15:00-16:00', status: '已取消', amount: 50, createTime: '2024-04-17 08:45:00' },
+  { id: 1006, patientName: '孙八', patientPhone: '13400134006', department: '消化内科', doctorName: '郭伟', appointmentDate: '2024-04-22', appointmentTime: '16:00-17:00', status: '待支付', amount: 50, createTime: '2024-04-17 16:30:00' },
+])
+
+const stats = computed(() => ({
+  pending: allData.filter(d => d.status === '待支付').length,
+  paid: allData.filter(d => d.status === '已支付').length,
+  completed: allData.filter(d => d.status === '已完成').length,
+  cancelled: allData.filter(d => d.status === '已取消').length
+}))
+
+const filteredData = computed(() => {
+  return allData.filter(item => {
+    const nameMatch = !searchForm.patientName || item.patientName.includes(searchForm.patientName)
+    const deptMatch = !searchForm.department || item.department === searchForm.department
+    const docMatch = !searchForm.doctorName || item.doctorName.includes(searchForm.doctorName)
+    const statusMatch = !searchForm.status || item.status === searchForm.status
+    return nameMatch && deptMatch && docMatch && statusMatch
+  })
+})
+
+const paginatedData = computed(() => {
+  const start = (pagination.currentPage - 1) * pagination.pageSize
+  return filteredData.value.slice(start, start + pagination.pageSize)
+})
+
+function getStatusType(status: string) {
+  const map: Record<string, string> = { '待支付': 'warning', '已支付': 'success', '已完成': 'info', '已取消': 'danger' }
+  return map[status] || 'info'
+}
+
+function handleSearch() { pagination.currentPage = 1 }
+function handleReset() { Object.assign(searchForm, { patientName: '', department: '', doctorName: '', date: '', status: '' }); pagination.currentPage = 1 }
+function handleSizeChange(size: number) { pagination.pageSize = size; pagination.currentPage = 1 }
+function handlePageChange(page: number) { pagination.currentPage = page }
+
+function handleAdd() {
+  Object.assign(formData, { patientName: '', patientPhone: '', department: '', doctorName: '', appointmentDate: '', appointmentTime: '' })
+  dialogVisible.value = true
+}
+
+function handleView(row: Appointment) { currentRow.value = row; detailVisible.value = true }
+
+function handlePay(row: Appointment) {
+  ElMessageBox.confirm('确认收到付款？', '支付确认').then(() => {
+    row.status = '已支付'
+    ElMessage.success('支付成功')
+  }).catch(() => {})
+}
+
+function handleComplete(row: Appointment) {
+  row.status = '已完成'
+  ElMessage.success('已完成')
+}
+
+function handleCancel(row: Appointment) {
+  ElMessageBox.confirm('确认取消该预约？', '取消确认').then(() => {
+    row.status = '已取消'
+    ElMessage.success('已取消')
+  }).catch(() => {})
+}
+
+function handleSubmit() {
+  formRef.value?.validate(valid => {
+    if (valid) {
+      const newId = Math.max(...allData.map(d => d.id)) + 1
+      allData.unshift({
+        id: newId,
+        ...formData,
+        appointmentDate: formData.appointmentDate as unknown as string,
+        status: '待支付',
+        amount: 50,
+        createTime: new Date().toLocaleString()
+      })
+      ElMessage.success('预约成功')
+      dialogVisible.value = false
+    }
+  })
+}
+</script>
+
+<style scoped>
+.appointment-page { padding: 16px; }
+.search-card { margin-bottom: 16px; }
+.search-card :deep(.el-card__body) { padding-bottom: 0; }
+.search-form { margin-bottom: -12px; }
+.toolbar { margin-bottom: 16px; display: flex; gap: 10px; }
+.stats-row { margin-bottom: 16px; }
+.stat-card { padding: 20px; border-radius: 8px; text-align: center; color: #fff; }
+.stat-pending { background: linear-gradient(135deg, #E6A23C, #F0AF45); }
+.stat-paid { background: linear-gradient(135deg, #67C23A, #85CE61); }
+.stat-completed { background: linear-gradient(135deg, #409EFF, #66B1FF); }
+.stat-cancelled { background: linear-gradient(135deg, #909399, #A6A9AD); }
+.stat-value { font-size: 32px; font-weight: 700; }
+.stat-label { font-size: 14px; margin-top: 4px; }
+.table-card :deep(.el-card__body) { padding: 0; }
+.pagination-wrapper { display: flex; justify-content: flex-end; padding: 16px; }
+</style>
