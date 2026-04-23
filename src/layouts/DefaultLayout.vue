@@ -13,11 +13,13 @@
       </div>
 
       <!-- 用户信息 -->
-      <div class="user-area">
-        <el-avatar :size="40" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+      <div class="user-area" v-if="authStore.userInfo">
+        <el-avatar :size="40" :src="authStore.userInfo.avatar || undefined">
+          {{ authStore.userInfo.nickname?.charAt(0) }}
+        </el-avatar>
         <div class="user-info">
-          <span class="user-name">管理员</span>
-          <span class="user-role">系统管理员</span>
+          <span class="user-name">{{ authStore.userInfo.nickname }}</span>
+          <span class="user-role">{{ getRoleName(authStore.userInfo.role) }}</span>
         </div>
       </div>
 
@@ -107,8 +109,10 @@
           </el-tooltip>
           <el-dropdown @command="handleCommand">
             <span class="user-info">
-              <el-avatar :size="32" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-              <span class="username">管理员</span>
+              <el-avatar :size="32" :src="authStore.userInfo?.avatar || undefined">
+                {{ authStore.userInfo?.nickname?.charAt(0) }}
+              </el-avatar>
+              <span class="username">{{ authStore.userInfo?.nickname || '用户' }}</span>
               <el-icon class="arrow"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
@@ -138,15 +142,29 @@ import {
   House, DataAnalysis, User, Stamp, Box, Money, Setting,
   FullScreen, Bell, ArrowDown
 } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
+const { userInfo } = storeToRefs(authStore)
 const activeMenu = computed(() => route.path)
+
+const roleMap: Record<string, string> = {
+  admin: '系统管理员',
+  doctor: '医生',
+  nurse: '护士'
+}
+
+function getRoleName(role: string) {
+  return roleMap[role] || role
+}
 
 function handleCommand(command: string) {
   if (command === 'logout') {
+    authStore.logout()
     ElMessage.success('已退出登录')
-    router.push('/login')
   } else if (command === 'profile') {
     ElMessage.info('个人中心开发中')
   } else if (command === 'settings') {

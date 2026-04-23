@@ -1,10 +1,12 @@
-import {createRouter, createWebHistory } from 'vue-router';
+import {createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '../layouts/DefaultLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   {
     path: '/',
     component: DefaultLayout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -98,7 +100,8 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../views/Login.vue')
+    component: () => import('../views/Login.vue'),
+    meta: { requiresAuth: false }
   }
 ]
 
@@ -107,4 +110,15 @@ const router = createRouter({
   routes
 })
 
-export default router;
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    next('/login')
+  } else if (to.path === '/login' && authStore.isLoggedIn) {
+    next('/')
+  } else {
+    next()
+  }
+})
+
+export default router
