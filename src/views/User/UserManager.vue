@@ -180,6 +180,7 @@ function handleDelete(row: User) {
 }
 
 function handleStatusChange(row: User) {
+  console.log(row)
   ElMessage.success(`用户已${row.status ? '启用' : '停用'}`)
 }
 
