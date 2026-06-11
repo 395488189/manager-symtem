@@ -4,13 +4,13 @@
     <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="姓名">
-          <el-input v-model="searchForm.name" placeholder="请输入姓名" clearable />
+          <el-input v-model="searchForm.name" placeholder="请输入姓名" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="身份证">
-          <el-input v-model="searchForm.idCard" placeholder="请输入身份证" clearable />
+          <el-input v-model="searchForm.idCard" placeholder="请输入身份证" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="电话">
-          <el-input v-model="searchForm.phone" placeholder="请输入电话" clearable />
+          <el-input v-model="searchForm.phone" placeholder="请输入电话" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
@@ -20,7 +20,9 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" @click="handleSearch" :loading="isSearching">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -43,7 +45,7 @@
         stripe
         border
         style="width: 100%"
-        v-loading="loading"
+        v-loading="patientStore.loading"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
@@ -126,7 +128,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
       </template>
     </el-dialog>
 
@@ -153,43 +155,52 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { Plus, Download, Search } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { usePatientStore } from '@/stores/patient'
+import { useSearch } from '@/composables/useSearch'
+import { useConfirm } from '@/composables/useConfirm'
+import type { Patient } from '@/types'
 
-interface Patient {
-  id: number
-  name: string
-  gender: string
-  age: number
-  idCard: string
-  phone: string
-  address: string
-  status: string
-  createTime: string
-}
+const patientStore = usePatientStore()
+const { confirm: confirmAction, showSuccess, showError } = useConfirm()
 
-const loading = ref(false)
+// 搜索
+const { searchForm, isSearching, handleSearch, handleReset: handleSearchReset, getSearchParams } = useSearch({
+  name: '',
+  idCard: '',
+  phone: '',
+  status: ''
+}, async (params) => {
+  await patientStore.fetchList(params)
+})
+
+// 分页
+const pagination = reactive({
+  currentPage: 1,
+  pageSize: 10
+})
+
+// 过滤后数据
+const filteredData = computed(() => patientStore.list)
+
+// 分页数据
+const paginatedData = computed(() => {
+  const start = (pagination.currentPage - 1) * pagination.pageSize
+  return filteredData.value.slice(start, start + pagination.pageSize)
+})
+
+// 弹窗状态
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const dialogTitle = ref('新增患者')
 const formRef = ref<FormInstance>()
 const currentRow = ref<Patient | null>(null)
 const isEdit = ref(false)
+const submitLoading = ref(false)
 
-const searchForm = reactive({
-  name: '',
-  idCard: '',
-  phone: '',
-  status: ''
-})
-
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10
-})
-
+// 表单数据
 const formData = reactive<Partial<Patient>>({
   name: '',
   gender: '男',
@@ -200,6 +211,7 @@ const formData = reactive<Partial<Patient>>({
   status: '正常'
 })
 
+// 表单验证
 const formRules: FormRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   idCard: [
@@ -212,35 +224,7 @@ const formRules: FormRules = {
   ]
 }
 
-// Mock 数据
-const allData = reactive<Patient[]>([
-  { id: 1, name: '张三', gender: '男', age: 45, idCard: '110101199001011234', phone: '13800138001', address: '北京市朝阳区建国路88号', status: '正常', createTime: '2024-01-15 10:30:00' },
-  { id: 2, name: '李四', gender: '女', age: 32, idCard: '310101199201022345', phone: '13900139002', address: '上海市浦东新区世纪大道100号', status: '住院中', createTime: '2024-02-20 14:20:00' },
-  { id: 3, name: '王五', gender: '男', age: 58, idCard: '440101198801033456', phone: '13700137003', address: '广州市天河区天河路123号', status: '已出院', createTime: '2024-03-10 09:15:00' },
-  { id: 4, name: '赵六', gender: '女', age: 28, idCard: '510101199601044567', phone: '13600136004', address: '成都市武侯区科华北路66号', status: '正常', createTime: '2024-04-05 16:45:00' },
-  { id: 5, name: '钱七', gender: '男', age: 67, idCard: '320101195901055678', phone: '13500135005', address: '南京市鼓楼区中山北路200号', status: '住院中', createTime: '2024-05-12 11:00:00' },
-  { id: 6, name: '孙八', gender: '女', age: 41, idCard: '210101198301066789', phone: '13400134006', address: '沈阳市和平区太原街150号', status: '正常', createTime: '2024-06-18 08:30:00' },
-  { id: 7, name: '周九', gender: '男', age: 35, idCard: '330101198901077890', phone: '13300133007', address: '杭州市西湖区文一路80号', status: '已出院', createTime: '2024-07-22 15:20:00' },
-  { id: 8, name: '吴十', gender: '女', age: 52, idCard: '420101197201088901', phone: '13200132008', address: '武汉市江汉区解放大道688号', status: '正常', createTime: '2024-08-30 10:00:00' },
-])
-
-// 过滤后数据
-const filteredData = computed(() => {
-  return allData.filter(item => {
-    const nameMatch = !searchForm.name || item.name.includes(searchForm.name)
-    const idCardMatch = !searchForm.idCard || item.idCard.includes(searchForm.idCard)
-    const phoneMatch = !searchForm.phone || item.phone.includes(searchForm.phone)
-    const statusMatch = !searchForm.status || item.status === searchForm.status
-    return nameMatch && idCardMatch && phoneMatch && statusMatch
-  })
-})
-
-// 分页数据
-const paginatedData = computed(() => {
-  const start = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredData.value.slice(start, start + pagination.pageSize)
-})
-
+// 状态颜色
 function getStatusType(status: string) {
   const map: Record<string, string> = {
     '正常': 'success',
@@ -250,18 +234,20 @@ function getStatusType(status: string) {
   return map[status] || 'info'
 }
 
-function handleSearch() {
-  pagination.currentPage = 1
-}
+// 搜索
+// function handleSearch() {
+//   pagination.currentPage = 1
+//   patientStore.fetchList({ ...getSearchParams(), page: 1 })
+// }
 
+// 重置
 function handleReset() {
-  searchForm.name = ''
-  searchForm.idCard = ''
-  searchForm.phone = ''
-  searchForm.status = ''
+  handleSearchReset()
   pagination.currentPage = 1
+  patientStore.fetchList({ page: 1, pageSize: pagination.pageSize })
 }
 
+// 分页
 function handleSizeChange(size: number) {
   pagination.pageSize = size
   pagination.currentPage = 1
@@ -269,8 +255,10 @@ function handleSizeChange(size: number) {
 
 function handlePageChange(page: number) {
   pagination.currentPage = page
+  patientStore.fetchList({ ...getSearchParams(), page })
 }
 
+// 新增
 function handleAdd() {
   isEdit.value = false
   dialogTitle.value = '新增患者'
@@ -278,6 +266,7 @@ function handleAdd() {
   dialogVisible.value = true
 }
 
+// 编辑
 function handleEdit(row: Patient) {
   isEdit.value = true
   dialogTitle.value = '编辑患者'
@@ -285,56 +274,55 @@ function handleEdit(row: Patient) {
   dialogVisible.value = true
 }
 
+// 查看
 function handleView(row: Patient) {
   currentRow.value = row
   detailVisible.value = true
 }
 
-function handleDelete(row: Patient) {
-  ElMessageBox.confirm(`确定要删除患者「${row.name}」吗？此操作不可恢复。`, '删除确认', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    const index = allData.findIndex(item => item.id === row.id)
-    if (index > -1) {
-      allData.splice(index, 1)
-      ElMessage.success('删除成功')
+// 删除
+async function handleDelete(row: Patient) {
+  const confirmed = await confirmAction.confirmDelete(row.name)
+  if (confirmed) {
+    const success = await patientStore.remove(row.id)
+    if (success) {
+      showSuccess('删除成功')
+    } else {
+      showError(patientStore.error || '删除失败')
     }
-  }).catch(() => {})
+  }
 }
 
-function handleSubmit() {
-  formRef.value?.validate((valid) => {
-    if (valid) {
-      if (isEdit.value) {
-        // 编辑
-        const index = allData.findIndex(item => item.id === formData.id)
-        if (index > -1) {
-          Object.assign(allData[index], formData)
-          ElMessage.success('修改成功')
-        }
+// 提交
+async function handleSubmit() {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
+
+  submitLoading.value = true
+  try {
+    if (isEdit.value) {
+      const success = await patientStore.update(formData.id!, formData)
+      if (success) {
+        showSuccess('修改成功')
+        dialogVisible.value = false
       } else {
-        // 新增
-        const newId = Math.max(...allData.map(item => item.id)) + 1
-        allData.unshift({
-          id: newId,
-          name: formData.name || '',
-          gender: formData.gender || '男',
-          age: formData.age || 18,
-          idCard: formData.idCard || '',
-          phone: formData.phone || '',
-          address: formData.address || '',
-          status: formData.status || '正常',
-          createTime: new Date().toLocaleString()
-        })
-        ElMessage.success('新增成功')
+        showError(patientStore.error || '修改失败')
       }
-      dialogVisible.value = false
+    } else {
+      const success = await patientStore.create(formData as Omit<Patient, 'id' | 'createTime'>)
+      if (success) {
+        showSuccess('新增成功')
+        dialogVisible.value = false
+      } else {
+        showError(patientStore.error || '新增失败')
+      }
     }
-  })
+  } finally {
+    submitLoading.value = false
+  }
 }
 
+// 重置表单
 function resetForm() {
   formData.name = ''
   formData.gender = '男'
@@ -345,13 +333,20 @@ function resetForm() {
   formData.status = '正常'
 }
 
+// 弹窗关闭
 function handleDialogClose() {
   formRef.value?.resetFields()
 }
 
+// 导出
 function handleExport() {
-  ElMessage.info('导出功能开发中...')
+  showSuccess('导出功能开发中...')
 }
+
+// 初始化
+onMounted(() => {
+  patientStore.fetchList({ page: 1, pageSize: pagination.pageSize })
+})
 </script>
 
 <style scoped>
