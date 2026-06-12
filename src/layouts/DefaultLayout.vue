@@ -272,8 +272,8 @@ function handleCommand(command: string) {
 .user-info {
   display: flex;
   flex-direction: column;
+  outline: none;
 }
-
 .user-name {
   color: #fff;
   font-size: 14px;

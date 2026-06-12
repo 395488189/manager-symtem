@@ -187,6 +187,7 @@ function handleSend() {
           content: content
         })
       }
+      console.log('Received chunk:', messages, content)
       isTyping.value = true
       scrollToBottom()
     },
