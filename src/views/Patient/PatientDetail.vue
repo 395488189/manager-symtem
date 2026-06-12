@@ -102,7 +102,7 @@ function handleEdit() {
   ElMessage.info('编辑功能开发中...')
 }
 
-function handleViewRecord(row: any) {
+function handleViewRecord(_row: any) {
   ElMessage.info('查看就诊详情功能开发中...')
 }
 </script>

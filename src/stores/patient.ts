@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { patientApi } from '@/api/modules/patient'
-import type { Patient, PatientQuery, PaginationResult } from '@/types'
+import type { Patient, PatientQuery } from '@/types'
 
 export const usePatientStore = defineStore('patient', () => {
   // 状态

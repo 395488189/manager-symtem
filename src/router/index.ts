@@ -12,7 +12,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: 'home'
+        redirect: 'dashboard'
       },
       {
         path: 'home',
@@ -112,7 +112,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore()
 
   // 检查是否需要登录

@@ -48,7 +48,7 @@ export function useSearch<T extends Record<string, any>>(
 
   function handleReset(newDefaults?: Partial<T>) {
     Object.keys(searchForm).forEach(key => {
-      searchForm[key as keyof T] = (newDefaults?.[key as keyof T] as any) ?? defaultValues[key as keyof T] ?? '' as any
+      (searchForm as any)[key] = (newDefaults as any)?.[key] ?? (defaultValues as any)[key] ?? ''
     })
     onReset?.()
   }
@@ -70,7 +70,7 @@ export function useSearch<T extends Record<string, any>>(
 /**
  * 防抖搜索 composable
  */
-export function useDebounceSearch<T>(
+export function useDebounceSearch<T extends Record<string, any>>(
   defaultValues: T,
   onSearch: (params: T) => void,
   delay = 300
@@ -87,7 +87,7 @@ export function useDebounceSearch<T>(
 
   function handleReset() {
     Object.keys(searchForm).forEach(key => {
-      searchForm[key as keyof T] = defaultValues[key as keyof T] ?? '' as any
+      (searchForm as any)[key] = (defaultValues as any)[key] ?? ''
     })
     onSearch({ ...searchForm } as T)
   }

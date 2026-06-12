@@ -164,16 +164,21 @@ import { useConfirm } from '@/composables/useConfirm'
 import type { Patient } from '@/types'
 
 const patientStore = usePatientStore()
-const { confirm: confirmAction, showSuccess, showError } = useConfirm()
+const { confirmDelete, showSuccess, showError } = useConfirm()
 
 // 搜索
-const { searchForm, isSearching, handleSearch, handleReset: handleSearchReset, getSearchParams } = useSearch({
+const { searchForm, isSearching, handleSearch, handleReset: handleSearchReset, getSearchParams } = useSearch<{
+  name: string
+  idCard: string
+  phone: string
+  status: string
+}>({
   name: '',
   idCard: '',
   phone: '',
   status: ''
 }, async (params) => {
-  await patientStore.fetchList(params)
+  await patientStore.fetchList(params as any)
 })
 
 // 分页
@@ -255,7 +260,8 @@ function handleSizeChange(size: number) {
 
 function handlePageChange(page: number) {
   pagination.currentPage = page
-  patientStore.fetchList({ ...getSearchParams(), page })
+  const params = getSearchParams()
+  patientStore.fetchList({ ...params, page } as any)
 }
 
 // 新增
@@ -282,7 +288,7 @@ function handleView(row: Patient) {
 
 // 删除
 async function handleDelete(row: Patient) {
-  const confirmed = await confirmAction.confirmDelete(row.name)
+  const confirmed = await confirmDelete(row.name)
   if (confirmed) {
     const success = await patientStore.remove(row.id)
     if (success) {

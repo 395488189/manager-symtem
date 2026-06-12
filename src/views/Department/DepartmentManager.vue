@@ -105,7 +105,7 @@ const dialogTitle = ref('新增科室')
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 
-const formData = reactive({
+const formData = reactive<{ id?: number; name: string; code: string; head: string; phone: string; bedCount: number; status: string; description: string }>({
   name: '',
   code: '',
   head: '',
@@ -163,9 +163,15 @@ function handleDelete(row: Department) {
 function handleSubmit() {
   formRef.value?.validate(valid => {
     if (valid) {
-      if (isEdit.value) {
+      if (isEdit.value && formData.id) {
         const index = allData.findIndex(d => d.id === formData.id)
-        if (index > -1) { Object.assign(allData[index], formData); ElMessage.success('修改成功') }
+        if (index > -1) {
+          const target = allData[index]
+          if (target) {
+            Object.assign(target, formData)
+            ElMessage.success('修改成功')
+          }
+        }
       } else {
         const newId = Math.max(...allData.map(d => d.id)) + 1
         allData.push({ id: newId, doctorCount: 0, ...formData })

@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 
 interface Log {
   id: number

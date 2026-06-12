@@ -116,7 +116,7 @@ const dialogTitle = ref('新增用户')
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 
-const formData = reactive({
+const formData = reactive<{ id?: number; username: string; name: string; role: string; phone: string; email: string; department: string; password: string }>({
   username: '', name: '', role: '', phone: '', email: '', department: '', password: ''
 })
 
@@ -187,9 +187,15 @@ function handleStatusChange(row: User) {
 function handleSubmit() {
   formRef.value?.validate(valid => {
     if (valid) {
-      if (isEdit.value) {
+      if (isEdit.value && formData.id) {
         const index = allData.findIndex(u => u.id === formData.id)
-        if (index > -1) { Object.assign(allData[index], formData); ElMessage.success('修改成功') }
+        if (index > -1) {
+          const target = allData[index]
+          if (target) {
+            Object.assign(target, formData)
+            ElMessage.success('修改成功')
+          }
+        }
       } else {
         const newId = Math.max(...allData.map(u => u.id)) + 1
         allData.push({ id: newId, status: true, lastLogin: '-', ...formData })

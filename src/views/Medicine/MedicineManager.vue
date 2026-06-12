@@ -141,7 +141,7 @@ const dialogTitle = ref('新增药品')
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 
-const formData = reactive({
+const formData = reactive<{ id?: number; name: string; spec: string; category: string; price: number; stock: number; minStock: number; manufacturer: string }>({
   name: '', spec: '', category: '', price: 0, stock: 0, minStock: 10, manufacturer: ''
 })
 
@@ -211,9 +211,15 @@ function handleDelete(row: Medicine) {
 function handleSubmit() {
   formRef.value?.validate(valid => {
     if (valid) {
-      if (isEdit.value) {
+      if (isEdit.value && formData.id) {
         const index = allData.findIndex(m => m.id === formData.id)
-        if (index > -1) { Object.assign(allData[index], formData); ElMessage.success('修改成功') }
+        if (index > -1) {
+          const target = allData[index]
+          if (target) {
+            Object.assign(target, formData)
+            ElMessage.success('修改成功')
+          }
+        }
       } else {
         const newId = Math.max(...allData.map(m => m.id)) + 1
         allData.push({ id: newId, status: '正常', ...formData })

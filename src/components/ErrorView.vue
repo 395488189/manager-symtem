@@ -42,18 +42,6 @@ const iconMap: Record<string, any> = {
   '500': WarningFilled
 }
 
-const titleMap: Record<string, string> = {
-  '403': '无权限访问',
-  '404': '页面不存在',
-  '500': '服务器错误'
-}
-
-const descriptionMap: Record<string, string> = {
-  '403': '您没有权限访问该页面，请联系管理员',
-  '404': '您访问的页面不存在或已被删除',
-  '500': '服务器发生错误，请稍后重试'
-}
-
 const icon = computed(() => iconMap[props.type] || CircleCloseFilled)
 const color = computed(() => props.type === 'warning' ? '#E6A23C' : '#F56C6C')
 

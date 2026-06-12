@@ -1,4 +1,3 @@
-import http from '@/utils/request'
 import type { Patient, PatientQuery, PaginationResult } from '@/types'
 
 // 模拟延迟
@@ -80,7 +79,7 @@ export const patientApi = {
     const index = mockPatients.findIndex(p => p.id === id)
     if (index === -1) throw new Error('患者不存在')
 
-    mockPatients[index] = { ...mockPatients[index], ...data }
+    mockPatients[index] = { ...mockPatients[index], ...data } as Patient
     return { ...mockPatients[index] }
   },
 

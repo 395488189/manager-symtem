@@ -131,24 +131,25 @@
         <router-view />
       </section>
     </div>
+
+    <!-- AI 助手 -->
+    <AiChat />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   House, DataAnalysis, User, Stamp, Box, Money, Setting,
   FullScreen, Bell, ArrowDown
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
-import { storeToRefs } from 'pinia'
+import AiChat from '@/components/AiChat.vue'
 
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
-const { userInfo } = storeToRefs(authStore)
 const activeMenu = computed(() => route.path)
 
 const roleMap: Record<string, string> = {
